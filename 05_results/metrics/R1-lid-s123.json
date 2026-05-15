@@ -1,0 +1,17 @@
+{
+  "val": {
+    "metric": 0.8596131447313252,
+    "weighted_f1": 0.8596131447313252
+  },
+  "test": {
+    "metric": 0.8116632547707244,
+    "weighted_f1": 0.8116632547707244
+  },
+  "config": {
+    "model_mode": "moe",
+    "tau": 1.0,
+    "router_input": "both",
+    "sentence_level": false,
+    "hard_routing": false
+  }
+}

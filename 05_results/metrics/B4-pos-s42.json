@@ -1,0 +1,9 @@
+{
+  "test": {
+    "metric": 0.6122357174988754,
+    "accuracy": 0.6122357174988754
+  },
+  "config": {
+    "model_mode": "fixed_avg"
+  }
+}
