@@ -2,8 +2,6 @@
 
 > A token-level, soft **Mixture-of-Experts (MoE)** framework that blends two frozen pre-trained language models — **HingBERT** (Hindi-English specialist) and **RoBERTa-base** (English generalist) — via a learned router to tackle Hindi-English code-mixed sequence labelling tasks.
 
----
-
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -20,7 +18,6 @@
 12. [Interpretability Analyses](#interpretability-analyses)
 13. [Tests](#tests)
 
----
 
 ## Overview
 
@@ -35,7 +32,6 @@ This project investigates whether a **frozen dual-expert MoE** — where a langu
 - Only the router and task head (~200K parameters) are trained.
 - Three router architectures are explored: **MLP**, **BiGRU**, and **CNN**.
 
----
 
 ## Architecture
 
@@ -104,7 +100,6 @@ Uses a local 5-token receptive field; computationally cheaper than GRU while sti
 - **Hard routing** (R7): Straight-through estimator — hard binary gate in the forward pass, soft gradient in the backward pass.
 - **Sentence-level routing** (R6): α is computed once from the concatenated CLS tokens of both experts and broadcast to all token positions.
 
----
 
 ## Tasks & Datasets
 
@@ -120,7 +115,6 @@ All datasets are downloaded automatically at runtime (or via `setup_data.py` for
 - COMI-LINGUA: uses dataset's native train/test split; 10% of training data is carved out as a validation set (seed-controlled).
 - POS / NER: 80/20 deterministic train/test split (seed=0); validation carved from training.
 
----
 
 ## Experiments & Baselines
 
@@ -163,37 +157,50 @@ All experiments and their configurations are registered in `configs.py`.
 
 > **A1 == R1** — the full-input MoE is the ablation baseline.
 
----
 
 ## Results
 
-Mean ± std across seeds (seeds 42, 123). Metric: weighted F1 for LID, accuracy for POS.
+Mean ± std across seeds (42, 123). Metric: weighted F1 for LID, accuracy for POS.
+Source of truth: `05_results/main_results.csv`.
 
 | Experiment | LID (↑) | POS (↑) |
 |------------|---------|---------|
 | B1 — HingBERT fine-tuned | **89.65 ± 0.23** | **91.09 ± 0.11** |
-| B2 — HingBERT frozen | 86.41 ± 0.08 | 85.20 ± 0.35 |
-| B3 — RoBERTa frozen | 74.60 ± 0.00 | 77.50 ± 0.08 |
-| B4 — Fixed 50/50 avg | 81.45 ± 0.12 | 83.91 ± 0.14 |
-| R1 — MoE MLP τ=1.0 | 88.25 ± 0.61 | 69.37 ± 0.15 |
-| R2 — MoE MLP τ=0.1 | **88.98 ± 0.65** | 69.16 ± 0.11 |
-| R3 — MoE MLP τ=0.3 | 88.76 ± 0.44 | 69.46 ± 0.18 |
-| R4 — MoE MLP τ=0.5 | 88.42 ± 0.53 | 69.58 ± 0.27 |
-| R5 — MoE MLP τ=2.0 | 87.90 ± 0.78 | 69.13 ± 0.09 |
-| R6 — Sentence-level | 88.05 ± 0.23 | 69.48 ± 0.22 |
-| R7 — Hard routing | 87.74 ± 0.41 | 69.21 ± 0.16 |
-| R8 — BiGRU router | 86.61 ± 0.63 | 69.33 ± 0.21 |
-| R9 — CNN router (k=5) | 88.29 ± 0.12 | 69.42 ± 0.14 |
-| A2 — HingBERT input only | 87.83 ± 0.35 | 69.24 ± 0.19 |
-| A3 — RoBERTa input only | 87.56 ± 0.29 | 69.31 ± 0.12 |
+| B2 — HingBERT frozen | 80.55 ± 0.06 | 65.23 ± 0.25 |
+| B3 — RoBERTa frozen | 81.48 ± 0.01 | 63.18 ± 0.31 |
+| B4 — Fixed 50/50 avg | 80.41 ± 0.31 | 61.10 ± 0.12 |
+| R1 — MoE MLP τ=1.0 | 84.37 ± 3.21 | **67.76 ± 1.50** |
+| R2 — MoE MLP τ=0.1 | **88.98 ± 0.65** | 66.99 ± 1.54 |
+| R3 — MoE MLP τ=0.3 | 88.86 ± 0.29 | 66.99 ± 1.25 |
+| R4 — MoE MLP τ=0.5 | 88.43 ± 0.11 | 66.91 ± 0.97 |
+| R5 — MoE MLP τ=2.0 | 84.40 ± 3.24 | 66.79 ± 0.28 |
+| R6 — Sentence-level | 81.20 ± 0.04 | 66.44 ± 0.18 |
+| R7 — Hard routing | 87.58 ± 0.10 | 65.20 ± 0.22 |
+| R8 — BiGRU router | 86.61 ± 0.63 | 64.22 ± 2.17 |
+| R9 — CNN router (k=5) | 88.29 ± 0.12 | 66.78 ± 0.01 |
+| A2 — HingBERT input only | 86.06 ± 0.24 | 67.23 ± 0.16 |
+| A3 — RoBERTa input only | 87.42 ± 0.08 | 67.05 ± 0.17 |
 
 **Key findings:**
-- MoE models match B1 on LID (89.0% vs 89.7%) while training only ~200K parameters vs ~85M.
-- MoE models underperform B1 on POS (69% vs 91%), suggesting frozen experts lack task-specific POS geometry.
-- Among router architectures, CNN (R9) matches MLP (R1) on LID while BiGRU (R8) slightly underperforms.
-- Lower temperature (R2, τ=0.1) gives the best LID score among MoE variants.
+- The best MoE variant (R2, τ=0.1) reaches 88.98 LID F1 vs 89.65 for a full
+  fine-tune — a 0.67-point gap while training 396K parameters instead of ~85M (~215×).
+- Routing is what matters, not the pairing: the best single frozen expert reaches
+  81.48, and a fixed 50/50 average reaches 80.41 — *worse* than either expert alone.
+  Learned per-token routing gains ~7.5 points over the best frozen expert.
+- Lower temperature both improves and stabilises LID: R2 (τ=0.1) is 88.98 ± 0.65
+  vs R1 (τ=1.0) at 84.37 ± 3.21. At the optimum α is near-binary, so the router is
+  performing per-token expert *selection* rather than blending.
+- POS does not work with frozen experts: the best MoE reaches 67.76 vs 91.09 for
+  the fine-tune. Frozen representations carry token-level lexical identity but not
+  syntactic structure. NER was near-zero entity F1 for all frozen variants and is
+  excluded from the sweep.
+- Routing *direction* is not consistent across runs. R1 assigns high α to English
+  tokens (0.84) and low to Hindi (0.11); R9 does the reverse (0.21 / 0.92). Since
+  the task head trains jointly, the model is invariant under α → (1−α), so α is
+  language-discriminative but its sign is fixed by initialisation and is not
+  interpretable across runs.
+- Only two seeds were run. Differences smaller than ~1 point are not resolvable.
 
----
 
 ## Project Structure
 
@@ -258,7 +265,6 @@ DL_MoE/
 | `03_code/api.py` | Flask server: ensemble inference, metric-weighted checkpoint selection, figure serving, stats endpoints |
 | `03_code/setup_data.py` | Pre-downloads HingBERT, RoBERTa, and all datasets into `models_and_data/` for offline use |
 
----
 
 ## Installation
 
@@ -280,7 +286,6 @@ pip install -r 03_code/requirements.txt
 
 **CUDA:** PyTorch will automatically use a GPU if available (`torch.cuda.is_available()`). No special configuration required.
 
----
 
 ## Usage
 
@@ -354,7 +359,6 @@ Results are aggregated in `05_results/metrics/aggregated.json`.
 | `--max_epochs` | `20` | Max training epochs (overrides config) |
 | `--exp_ids` | — | Subset of experiment IDs for sweep mode |
 
----
 
 ## Flask API & Web Interface
 
@@ -409,7 +413,6 @@ All three pages are served statically and call the Flask API:
 
 Open the HTML files directly in a browser while the Flask API is running on `localhost:5000`.
 
----
 
 ## Configuration Reference
 
@@ -434,7 +437,6 @@ SEEDS = [42, 123]
 TASKS = ["lid", "pos"]    # add "ner" to enable NER
 ```
 
----
 
 ## Outputs
 
@@ -463,7 +465,6 @@ After training and analysis, results are organized as follows:
 
 Checkpoint files store **only the trainable parameters** (router + task head), keeping file sizes small (~1 MB). Expert weights are always re-loaded from HuggingFace on demand.
 
----
 
 ## Interpretability Analyses
 
@@ -480,7 +481,6 @@ A fifth analysis (`run_cross_task_analyses`) compares α distributions across LI
 
 **Computed stats** (saved to `*_stats.json`) include: mean/std α overall, α per language label, L2 disagreement correlation, switch-point trajectory (mean ± SEM for offsets −3 to +3), CMI bucket statistics (5 buckets with mean/median/q25/q75).
 
----
 
 ## Tests
 
@@ -507,7 +507,6 @@ The test suite (10 tests in `03_code/tests/test_alignment.py`) covers:
 
 > **Note:** The first test run downloads HingBERT and RoBERTa (~940 MB total).
 
----
 
 ## Dependencies
 
